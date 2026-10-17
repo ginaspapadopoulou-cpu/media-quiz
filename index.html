@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz — Ελληνική Αγορά ΜΜΕ 2026 | Διορθωμένο</title>
+<style>
+:root{
+  --bg:#0f172a;--panel:#172033;--panel2:#1f2937;--text:#f8fafc;
+  --muted:#cbd5e1;--orange:#f59e0b;--green:#34d399;--red:#fb7185;--cyan:#22d3ee
+}
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;font-family:Arial,Helvetica,sans-serif;
+  background:radial-gradient(circle at 20% 0%,#243554 0,#0f172a 42%,#090f1d 100%);
+  color:var(--text);display:grid;place-items:center;padding:24px;overflow-x:hidden
+}
+.wrap{width:min(980px,96vw);position:relative;z-index:2}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.brand{font-size:13px;color:var(--muted)}
+.pill{padding:8px 12px;border:1px solid #334155;border-radius:999px;color:var(--muted);font-size:13px;background:#101827aa}
+.card{
+  background:linear-gradient(180deg,#182236f5,#121a2bf5);
+  border:1px solid #334155;border-radius:26px;padding:34px;
+  box-shadow:0 28px 70px #0008;backdrop-filter:blur(12px)
+}
+.progress{height:9px;background:#253248;border-radius:999px;overflow:hidden;margin-bottom:26px}
+.bar{height:100%;width:0;background:linear-gradient(90deg,var(--orange),#fb923c);transition:.35s}
+.kicker{font-size:13px;color:var(--orange);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px}
+.q{font-size:clamp(25px,3.2vw,39px);line-height:1.14;font-weight:800;margin:0 0 24px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ans{
+  border:1px solid #3a475e;background:#1a2539;color:var(--text);
+  border-radius:17px;padding:18px;text-align:left;font-size:18px;cursor:pointer;
+  transition:.16s;min-height:72px;display:flex;align-items:center;gap:12px
+}
+.ans:hover{transform:translateY(-2px);border-color:#64748b;background:#202d44}
+.letter{
+  width:32px;height:32px;display:grid;place-items:center;border-radius:10px;
+  background:#0f172a;color:var(--orange);font-weight:800;flex:0 0 auto
+}
+.ans.correct{border-color:var(--green);background:#103a34}
+.ans.wrong{border-color:var(--red);background:#422033}
+.ans:disabled{cursor:default;transform:none}
+.feedback{min-height:58px;margin-top:20px;font-size:17px;color:var(--muted);line-height:1.45}
+.feedback strong{color:var(--text)}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:22px}
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:800;font-size:15px;cursor:pointer}
+.primary{background:var(--orange);color:#111827}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.score{color:var(--muted);font-weight:700}
+.final{text-align:center;padding:18px 4px}
+.final h1{font-size:clamp(34px,5vw,58px);margin:5px 0 12px}
+.bigScore{font-size:78px;font-weight:900;color:var(--orange);line-height:1}
+.final p{font-size:20px;color:var(--muted)}
+.sources{margin-top:24px;padding-top:18px;border-top:1px solid #334155;color:#94a3b8;font-size:12px;line-height:1.5}
+.tiny{font-size:12px;color:#94a3b8;margin-top:12px}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:10}
+@media(max-width:700px){
+  .card{padding:22px}.answers{grid-template-columns:1fr}.q{font-size:27px}
+  .top{align-items:flex-start;flex-direction:column}.actions{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand">ΕΜΜΕ ΕΚΠΑ · Διοίκηση & Μάρκετινγκ των ΜΜΕ · 2026–2027</div>
+    <div class="pill" id="counter">Ερώτηση 1 / 12</div>
+  </div>
+
+  <main class="card" id="card">
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="kicker">Media Market Challenge</div>
+    <h1 class="q" id="question"></h1>
+    <section class="answers" id="answers"></section>
+    <div class="feedback" id="feedback">Διάλεξε μία απάντηση.</div>
+
+    <div class="actions">
+      <div class="score" id="score">Σκορ: 0</div>
+      <button class="btn primary" id="next" disabled>Επόμενη →</button>
+    </div>
+
+    <div class="tiny">Σωστή απάντηση = πυροτέχνημα 🎆 · Λάθος = εμφανίζεται αμέσως η σωστή εξήγηση.</div>
+  </main>
+</div>
+
+<script>
+const questions = [
+  {
+    q:'Ποια είναι η διείσδυση του internet στην Ελλάδα στο Digital 2026;',
+    a:['67%','77%','87%','97%'],
+    c:2,
+    e:'Σωστά: 8,64 εκατ. internet users, περίπου 87% του πληθυσμού.'
+  },
+  {
+    q:'Τι σημαίνει “7,40 εκατ. social media user identities”;',
+    a:[
+      '7,40 εκατ. απολύτως μοναδικά φυσικά πρόσωπα',
+      'Λογαριασμοί/ψηφιακές ταυτότητες χρηστών, όχι κατ’ ανάγκη μοναδικά άτομα',
+      'Μόνο επαγγελματικοί λογαριασμοί',
+      'Μόνο λογαριασμοί στο Facebook'
+    ],
+    c:1,
+    e:'Τα social media identities δεν ταυτίζονται υποχρεωτικά με μοναδικά φυσικά πρόσωπα.'
+  },
+  {
+    q:'Ποια είναι η μέση ημερήσια κάλυψη ραδιοφώνου στην Αττική στο τρέχον snapshot της ΑΕΜΑΡ;',
+    a:['60%','70%','80%','95%'],
+    c:2,
+    e:'Η ΑΕΜΑΡ εμφανίζει 80% μέση ημερήσια κάλυψη και 95% μέση εβδομαδιαία κάλυψη.'
+  },
+  {
+    q:'Τι συνέβη στις συνολικές πωλήσεις εφημερίδων το 2025 έναντι του 2024;',
+    a:['Αυξήθηκαν 11,7%','Μειώθηκαν 11,7%','Έμειναν σταθερές','Μειώθηκαν 1,7%'],
+    c:1,
+    e:'Η ΕΛΣΤΑΤ κατέγραψε μείωση 11,7% στις συνολικές πωλήσεις εφημερίδων.'
+  },
+  {
+    q:'Τι σημαίνει DNR στο υλικό μας;',
+    a:[
+      'Digital Network Rating',
+      'Digital News Report',
+      'Data News Reach',
+      'Digital Nielsen Review'
+    ],
+    c:1,
+    e:'DNR = Digital News Report του Reuters Institute for the Study of Journalism, University of Oxford.'
+  },
+  {
+    q:'Ποιο ήταν το συνολικό trust in news στην Ελλάδα στο Digital News Report 2026;',
+    a:['18%','28%','38%','48%'],
+    c:0,
+    e:'Το trust in news ήταν 18%, ιδιαίτερα χαμηλό για την ελληνική ειδησεογραφική αγορά.'
+  },
+  {
+    q:'Τι ποσοστό δήλωσε ότι πλήρωσε για online news στην Ελλάδα;',
+    a:['8%','18%','28%','38%'],
+    c:0,
+    e:'Μόνο 8% — ένδειξη χαμηλής willingness to pay για online ειδήσεις.'
+  },
+  {
+    q:'Τι είναι “γραμμική τηλεόραση” (linear TV);',
+    a:[
+      'Περιεχόμενο μόνο στο YouTube',
+      'Τηλεόραση με προκαθορισμένο πρόγραμμα μετάδοσης',
+      'Οποιοδήποτε on-demand περιεχόμενο',
+      'Μόνο συνδρομητική τηλεόραση'
+    ],
+    c:1,
+    e:'Linear TV = το κανάλι καθορίζει τι μεταδίδεται και πότε, σύμφωνα με πρόγραμμα.'
+  },
+  {
+    q:'Πότε η παρουσία ενός radio brand γίνεται πραγματικά omnichannel;',
+    a:[
+      'Μόλις έχει FM και Instagram',
+      'Όταν έχει πολλά κανάλια, ακόμη κι αν λειτουργούν ανεξάρτητα',
+      'Όταν τα touchpoints είναι διασυνδεδεμένα και προσφέρουν ενιαία εμπειρία',
+      'Μόνο όταν καταργήσει το FM'
+    ],
+    c:2,
+    e:'Multichannel = πολλά κανάλια. Omnichannel = ενοποίηση και συνέχεια της εμπειρίας μεταξύ των καναλιών.'
+  },
+  {
+    q:'Τι είναι CTV (Connected TV);',
+    a:[
+      'Μόνο ένα τηλεοπτικό κανάλι',
+      'Τηλεοπτική συσκευή συνδεδεμένη στο internet',
+      'Άλλη ονομασία του Netflix',
+      'Επίγεια τηλεόραση χωρίς internet'
+    ],
+    c:1,
+    e:'CTV είναι η συνδεδεμένη τηλεοπτική συσκευή/περιβάλλον πρόσβασης. OTT είναι η υπηρεσία διανομής μέσω internet.'
+  },
+  {
+    q:'Τι σημαίνει licensing ως πηγή εσόδων για ένα media brand;',
+    a:[
+      'Παραχώρηση δικαιωμάτων χρήσης περιεχομένου, format ή brand έναντι αμοιβής',
+      'Αγορά τηλεοπτικής συσκευής',
+      'Δωρεάν διάθεση όλου του περιεχομένου',
+      'Μόνο πώληση διαφημιστικού χρόνου'
+    ],
+    c:0,
+    e:'Licensing = το media brand παραχωρεί δικαιώματα χρήσης περιεχομένου, format ή brand και εισπράττει αμοιβή.'
+  },
+  {
+    q:'Τι είναι advertising inventory στα media;',
+    a:[
+      'Ο εξοπλισμός του studio',
+      'Οι διαθέσιμες διαφημιστικές θέσεις, χρόνος ή impressions που μπορούν να πουληθούν',
+      'Η λίστα των εργαζομένων',
+      'Το αρχείο παλαιών εκπομπών'
+    ],
+    c:1,
+    e:'Advertising inventory = το διαθέσιμο “απόθεμα” διαφημιστικού χώρου, χρόνου ή impressions προς πώληση.'
+  }
+];
+
+let i=0, score=0, locked=false;
+
+const qEl=document.getElementById('question');
+const aEl=document.getElementById('answers');
+const fEl=document.getElementById('feedback');
+const next=document.getElementById('next');
+const scoreEl=document.getElementById('score');
+const counter=document.getElementById('counter');
+const bar=document.getElementById('bar');
+const card=document.getElementById('card');
+
+function render(){
+  locked=false;
+  next.disabled=true;
+  counter.textContent=`Ερώτηση ${i+1} / ${questions.length}`;
+  bar.style.width=`${(i/questions.length)*100}%`;
+  qEl.textContent=questions[i].q;
+  aEl.innerHTML='';
+  fEl.textContent='Διάλεξε μία απάντηση.';
+
+  questions[i].a.forEach((t,idx)=>{
+    const b=document.createElement('button');
+    b.className='ans';
+    b.innerHTML=`<span class="letter">${String.fromCharCode(65+idx)}</span><span>${t}</span>`;
+    b.onclick=()=>answer(idx,b);
+    aEl.appendChild(b);
+  });
+}
+
+function answer(idx,b){
+  if(locked) return;
+  locked=true;
+  const q=questions[i];
+
+  [...aEl.children].forEach((x,j)=>{
+    x.disabled=true;
+    if(j===q.c) x.classList.add('correct');
+  });
+
+  if(idx===q.c){
+    score++;
+    scoreEl.textContent=`Σκορ: ${score}`;
+    fEl.innerHTML=`<strong>Σωστό!</strong> ${q.e}`;
+    fireworks();
+  } else {
+    b.classList.add('wrong');
+    fEl.innerHTML=`<strong>Λάθος.</strong> ${q.e}`;
+  }
+  next.disabled=false;
+}
+
+next.onclick=()=>{
+  i++;
+  if(i<questions.length) render();
+  else finish();
+};
+
+function finish(){
+  bar.style.width='100%';
+  counter.textContent='Ολοκληρώθηκε';
+  const pct=Math.round(score/questions.length*100);
+  let msg =
+    pct>=90 ? 'Άριστα — media strategist!' :
+    pct>=70 ? 'Πολύ δυνατή εικόνα της αγοράς.' :
+    pct>=50 ? 'Καλή βάση — ξαναδείτε μερικά σημεία.' :
+              'Πάμε άλλη μία γύρα με τα δεδομένα.';
+
+  card.innerHTML=`
+    <div class="final">
+      <div class="kicker">Τελικό σκορ</div>
+      <div class="bigScore">${score}/${questions.length}</div>
+      <h1>${msg}</h1>
+      <p>${pct}% σωστές απαντήσεις</p>
+      <button class="btn primary" onclick="location.reload()">↻ Παίξε ξανά</button>
+      <div class="sources">
+        <strong>Βάση ερωτήσεων:</strong>
+        Reuters Institute Digital News Report 2026 · DataReportal Digital 2026: Greece ·
+        ΕΛΣΤΑΤ 2026 · ΑΕΜΑΡ 2026 · IAB Europe/Hellas ·
+        διορθωμένο υλικό «Ελληνική Αγορά ΜΜΕ 2026».
+      </div>
+    </div>`;
+
+  if(pct>=70) megaFireworks();
+}
+
+// Offline canvas fireworks
+const cv=document.getElementById('fx');
+const ctx=cv.getContext('2d');
+let parts=[];
+
+function resize(){
+  cv.width=innerWidth*devicePixelRatio;
+  cv.height=innerHeight*devicePixelRatio;
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener('resize',resize);
+resize();
+
+function burst(x,y,n=80){
+  const cols=['#f59e0b','#34d399','#22d3ee','#fb7185','#f8fafc'];
+  for(let k=0;k<n;k++){
+    const a=Math.random()*Math.PI*2;
+    const s=2+Math.random()*7;
+    parts.push({
+      x,y,
+      vx:Math.cos(a)*s,
+      vy:Math.sin(a)*s-1.5,
+      life:45+Math.random()*35,
+      c:cols[Math.floor(Math.random()*cols.length)],
+      r:1.5+Math.random()*2.5
+    });
+  }
+}
+
+function fireworks(){
+  burst(innerWidth*.5,innerHeight*.38,95);
+}
+
+function megaFireworks(){
+  burst(innerWidth*.25,innerHeight*.35,100);
+  setTimeout(()=>burst(innerWidth*.75,innerHeight*.32,100),180);
+  setTimeout(()=>burst(innerWidth*.5,innerHeight*.22,130),360);
+}
+
+(function anim(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  parts.forEach(p=>{
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vy+=.07;
+    p.vx*=.992;
+    p.life--;
+    ctx.globalAlpha=Math.max(0,p.life/70);
+    ctx.fillStyle=p.c;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  parts=parts.filter(p=>p.life>0);
+  requestAnimationFrame(anim);
+})();
+
+render();
+</script>
+</body>
+</html>
